@@ -5,9 +5,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 
-// AUTH ROUTES
-Route::post('/login',[AuthController::class, 'login']);
 
 Route::get('/user', function (Request $request) {
+    info('called again');
+    info($request->user());
     return $request->user();
 })->middleware('auth:sanctum');
