@@ -19,8 +19,10 @@ class CreateNewUser implements CreatesNewUsers
      */
     public function create(array $input): User
     {
-        info($input);
-        info(request()->file('document'));
+        // parsing to boolean as from vue string is coming
+        $input['isInstructor'] = filter_var($input['isInstructor'], FILTER_VALIDATE_BOOLEAN);
+
+        // validations
         $validator = Validator::make($input, [
             'firstName' => ['required', 'string', 'max:255'],
             'lastName' => ['required', 'string', 'max:255'],
@@ -40,20 +42,31 @@ class CreateNewUser implements CreatesNewUsers
 
         $validator->validate();
         
+        // storing file and getting path
         $path = null;
         if(isset($input['isInstructor']) && $input['isInstructor']) {
             $path = request()->file('document')->store('users/files', 'public');
         }
 
-        return User::create([
+        // creating user
+        $user = User::create([
             'first_name' => $input['firstName'],
             'last_name' => $input['lastName'],
             'email' => $input['email'],
             'password' => Hash::make($input['password']),
-            'is_instructor' => $input['isInstructor'] === 'true' ? 1 : 0,
+            'is_instructor' => $input['isInstructor'],
             'phone_number' => $input['phoneNumber'] ?? null,
             'document' => $path ?? null,
             'message' => $input['message'] ?? null,
         ]);
+
+        // assigning Roles
+        if(isset($input['isInstructor']) && $input['isInstructor']) {
+            $user->assignRole('instructor');
+        } else {
+            $user->assignRole('student');
+        }
+
+        return $user;
     }
 }
